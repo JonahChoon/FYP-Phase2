@@ -1,0 +1,78 @@
+{% extends "base.html" %} {% block content %}
+<div class="crumbs">
+  <a href="{{ url_for('instructor') }}">Instructor</a> › {{ student }}
+</div>
+<div
+  class="page-head"
+  style="
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+  "
+>
+  <div>
+    <h1 style="margin: 0">{{ student }}</h1>
+    <p class="lede" style="margin: 4px 0 0">
+      Per-challenge progress and tutor conversations.
+    </p>
+  </div>
+  <form
+    method="post"
+    action="{{ url_for('instructor_reset') }}"
+    onsubmit="return confirm('Reset ALL progress for {{ student }}?');"
+  >
+    <input type="hidden" name="student" value="{{ student }}" />
+    <button
+      class="btn ghost"
+      style="color: var(--danger); border-color: var(--danger)"
+    >
+      Reset all progress
+    </button>
+  </form>
+</div>
+
+{% if summary %}
+<div class="clist">
+  {% for s in summary %}
+  <div class="crow">
+    <div class="grow">
+      <span class="nm">{{ s.name }}</span>
+      <div class="ds">Hints {{ s.hint_level }} · {{ s.messages }} messages</div>
+    </div>
+    <div class="chips">
+      {% if s.solved %}<span class="chip solved">Solved</span>{% endif %} {% if
+      s.messages %}
+      <a
+        class="open"
+        href="{{ url_for('instructor_transcript', student=student, key=s.challenge) }}"
+        >View chat ›</a
+      >
+      {% endif %}
+      <form
+        method="post"
+        action="{{ url_for('instructor_reset') }}"
+        style="display: inline"
+        onsubmit="return confirm('Reset {{ s.name }} for {{ student }}?');"
+      >
+        <input type="hidden" name="student" value="{{ student }}" />
+        <input type="hidden" name="challenge" value="{{ s.challenge }}" />
+        <button
+          class="btn ghost"
+          style="padding: 4px 10px; color: var(--muted)"
+        >
+          Reset
+        </button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">
+  <p class="muted" style="margin: 0">
+    This student hasn't started any challenge yet.
+  </p>
+</div>
+{% endif %} {% endblock %}

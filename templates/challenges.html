@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <h1>Challenges</h1>
+  <p class="lede">Pick a challenge, work through it, and ask the tutor when you're stuck.</p>
+  <div class="progress">
+    <span class="muted mono" style="font-size:.85rem;">{{ solved_count }}/{{ total }} solved</span>
+    <span class="bar"><i style="width: {{ (solved_count / total * 100) if total else 0 }}%;"></i></span>
+  </div>
+</div>
+
+{% for tut, items in grouped.items() %}
+<div class="section-label">{{ labels.get(tut, "Tutorial " ~ tut) }}</div>
+<div class="clist">
+  {% for ch in items %}
+  <div class="crow">
+    <div class="grow">
+      <a class="nm" href="{{ url_for('challenge', key=ch.key) }}">{{ ch.public.name }}</a>
+      <div class="ds">{{ ch.public.description }}</div>
+    </div>
+    <div class="chips">
+      {% if solved.get(ch.key) %}<span class="chip solved">Solved</span>{% endif %}
+      <span class="chip {{ ch.public.difficulty }}">{{ ch.public.difficulty }}</span>
+      <a class="open" href="{{ url_for('challenge', key=ch.key) }}" aria-label="Open {{ ch.public.name }}">Open ›</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endfor %}
+{% endblock %}

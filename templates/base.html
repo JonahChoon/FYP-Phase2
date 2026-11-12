@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}SC4012 CTF Tutor{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  {% if user %}
+  <nav class="nav">
+    <a class="brand" href="{{ url_for('index') }}" aria-label="SC4012 CTF Tutor home">
+      <svg class="mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M6 3v18" stroke="#90a0b2" stroke-width="2" stroke-linecap="round"/>
+        <path d="M6 4h11l-2.2 3.2L17 10.4H6z" fill="#e8b33d"/>
+      </svg>
+      <b>SC4012</b><span class="sub">CTF Tutor</span>
+    </a>
+    <div class="nav-links">
+      <a href="{{ url_for('index') }}" class="{{ 'active' if request.endpoint in ['index','challenge'] }}">Challenges</a>
+      {% if user.role == 'instructor' %}
+        <a href="{{ url_for('instructor') }}" class="{{ 'active' if request.endpoint == 'instructor' }}">Instructor</a>
+      {% endif %}
+    </div>
+    <div class="usermenu">
+      <span class="who">{{ user.name }}</span>
+      <span class="role {{ user.role }}">{{ user.role }}</span>
+      <a class="btn ghost" href="{{ url_for('logout') }}" style="padding:6px 12px;">Sign out</a>
+    </div>
+  </nav>
+  {% endif %}
+
+  <div class="wrap {% block wrapclass %}{% endblock %}">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>

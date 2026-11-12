@@ -1,0 +1,212 @@
+{% extends "base.html" %} {% block title %}{{ pub.name }} — SC4012 CTF Tutor{%
+endblock %} {% block wrapclass %}wide{% endblock %} {% block content %}
+<div class="crumbs">
+  <a href="{{ url_for('index') }}">Challenges</a> › {{ pub.name }}
+</div>
+
+<div class="detail">
+  <!-- compact challenge info sidebar -->
+  <aside class="side">
+    <div class="title-row">
+      <h1 style="margin: 0; font-size: 1.25rem">{{ pub.name }}</h1>
+    </div>
+    <div
+      style="margin: 2px 0 12px; display: flex; gap: 8px; align-items: center"
+    >
+      <span class="chip {{ pub.difficulty }}">{{ pub.difficulty }}</span>
+      {% if solved %}<span class="chip solved">Solved</span>{% endif %}
+    </div>
+    <p class="muted" style="font-size: 0.9rem; margin-bottom: 16px">
+      {{ pub.description }}
+    </p>
+
+    {% if ch.file_name %}
+    <a
+      class="btn ghost block"
+      href="{{ url_for('download', key=key) }}"
+      style="margin-bottom: 16px"
+      >⬇ Download file</a
+    >
+    {% endif %}
+
+    <div class="card">
+      <h3>Submit flag</h3>
+      <form
+        class="flagform"
+        method="post"
+        action="{{ url_for('submit_flag', key=key) }}"
+      >
+        <input
+          class="mono"
+          type="text"
+          name="flag"
+          placeholder="CZ4067{...}"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button class="btn block">Submit</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h3>
+        Hints
+        <span class="muted mono" style="font-size: 0.76rem; font-weight: 400"
+          >{{ hint_level }}/{{ max_hint }}</span
+        >
+      </h3>
+      {% for lvl, text in unlocked %}
+      <div class="hint">
+        <span class="lvl">HINT {{ lvl }}</span><br />{{ text }}
+      </div>
+      {% endfor %} {% for i in range(hint_level + 1, max_hint + 1) %}
+      <div class="hint locked">🔒 Hint {{ i }} — locked</div>
+      {% endfor %} {% if hint_level < max_hint %}
+      <form
+        method="post"
+        action="{{ url_for('unlock_hint', key=key) }}"
+        style="margin-top: 6px"
+      >
+        <button class="btn ghost block">Unlock next hint</button>
+      </form>
+      {% elif max_hint == 0 %}
+      <p class="muted" style="margin: 0">No hints for this challenge.</p>
+      {% else %}
+      <p class="muted" style="margin: 0">All hints unlocked.</p>
+      {% endif %}
+    </div>
+
+    <form
+      method="post"
+      action="{{ url_for('reset_my_challenge', key=key) }}"
+      onsubmit="
+        return confirm(
+          'Reset your hints and chat for this challenge? This cannot be undone.',
+        );
+      "
+    >
+      <button class="btn ghost block" style="color: var(--muted)">
+        Reset this challenge
+      </button>
+    </form>
+  </aside>
+
+  <!-- AI tutor: the main area -->
+  <section class="tutor-main">
+    <div class="card tutorpane">
+      <div class="tutor-head">
+        <span class="dot {{ '' if ai_configured else 'off' }}"></span>
+        <strong>AI Tutor</strong>
+        <span class="muted" style="font-size: 0.8rem; margin-left: auto"
+          >guided</span
+        >
+      </div>
+      <div class="stream" id="stream">
+        <div class="tutor-empty" id="empty">
+          Ask a question to get started. The tutor gives guidance, never the
+          flag or a full solution.
+        </div>
+      </div>
+      <form class="composer" id="chatform">
+        <input
+          type="text"
+          id="msg"
+          placeholder="Ask the tutor…"
+          autocomplete="off"
+        />
+        <button class="btn" id="sendbtn" type="submit">Send</button>
+      </form>
+    </div>
+  </section>
+</div>
+
+<script>
+  const stream = document.getElementById('stream');
+  const form   = document.getElementById('chatform');
+  const input  = document.getElementById('msg');
+  const sendbtn= document.getElementById('sendbtn');
+  const empty  = document.getElementById('empty');
+  const chatUrl = "{{ url_for('chat', key=key) }}";
+  const PRIOR = {{ messages|tojson }};
+
+  function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function renderMarkdown(src){
+    let t = esc(src);
+    t = t.replace(/```([\s\S]*?)```/g, (m,c)=>'<pre class="code">'+c.replace(/^\n/,'').replace(/\n$/,'')+'</pre>');
+    t = t.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+    t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    t = t.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+    const lines = t.split('\n'); let html=''; let inList=false;
+    for (const ln of lines){
+      if (ln.indexOf('<pre') === 0){ if(inList){html+='</'+inList+'>';inList=false;} html+=ln; continue; }
+      const b = ln.match(/^\s*[-*]\s+(.*)/);
+      const o = ln.match(/^\s*\d+\.\s+(.*)/);
+      if (b){ if(inList!=='ul'){ if(inList)html+='</'+inList+'>'; html+='<ul>'; inList='ul'; } html+='<li>'+b[1]+'</li>'; }
+      else if (o){ if(inList!=='ol'){ if(inList)html+='</'+inList+'>'; html+='<ol>'; inList='ol'; } html+='<li>'+o[1]+'</li>'; }
+      else { if(inList){html+='</'+inList+'>';inList=false;} html += ln ? ln+'<br>' : '<br>'; }
+    }
+    if (inList) html+='</'+inList+'>';
+    return html.replace(/(<br>\s*){2,}$/,'').replace(/(<br>\s*)+$/,'');
+  }
+  function add(text, cls, who) {
+    if (empty) empty.remove();
+    const el = document.createElement('div');
+    el.className = 'msg ' + cls;
+    if (who) { const w = document.createElement('span'); w.className='who'; w.textContent=who; el.appendChild(w); }
+    if (cls === 'tutor') {
+      const body = document.createElement('span');
+      body.innerHTML = renderMarkdown(text);
+      el.appendChild(body);
+    } else {
+      el.appendChild(document.createTextNode(text));
+    }
+    stream.appendChild(el);
+    stream.scrollTop = stream.scrollHeight;
+    return el;
+  }
+  function addTyping() {
+    if (empty) empty.remove();
+    const el = document.createElement('div');
+    el.className = 'typing-bubble';
+    el.innerHTML = '<span></span><span></span><span></span>';
+    stream.appendChild(el);
+    stream.scrollTop = stream.scrollHeight;
+    return el;
+  }
+  function setBusy(b) {
+    input.disabled = b; sendbtn.disabled = b;
+    sendbtn.textContent = b ? 'Thinking…' : 'Send';
+    if (!b) input.focus();
+  }
+
+  // Replay the saved conversation (persists across restarts).
+  PRIOR.forEach(m => add(m.content, m.role === 'tutor' ? 'tutor' : 'me',
+                         m.role === 'tutor' ? 'Tutor' : 'You'));
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text || input.disabled) return;
+    add(text, 'me', 'You');
+    input.value = '';
+    setBusy(true);
+    const typing = addTyping();
+    try {
+      const r = await fetch(chatUrl, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({message: text})
+      });
+      const data = await r.json();
+      typing.remove();
+      add(data.reply || '(no response)', data.kind === 'tutor' ? 'tutor' : 'sys',
+          data.kind === 'tutor' ? 'Tutor' : null);
+    } catch (err) {
+      typing.remove();
+      add('Couldn’t reach the server. Check that the app is still running and try again.', 'sys', null);
+    } finally {
+      setBusy(false);
+    }
+  });
+</script>
+{% endblock %}

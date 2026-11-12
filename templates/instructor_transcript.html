@@ -1,0 +1,26 @@
+{% extends "base.html" %} {% block content %}
+<div class="crumbs">
+  <a href="{{ url_for('instructor') }}">Instructor</a> ›
+  <a href="{{ url_for('instructor_user', student=student) }}">{{ student }}</a>
+  › {{ name }}
+</div>
+<div class="page-head">
+  <h1 style="margin: 0">{{ name }}</h1>
+  <p class="lede" style="margin: 4px 0 0">Tutor conversation (read-only).</p>
+</div>
+
+<div class="card">
+  {% if messages %}
+  <div class="stream" style="height: auto; max-height: none; padding: 0">
+    {% for m in messages %}
+    <div class="msg {{ 'tutor' if m.role == 'tutor' else 'me' }}">
+      <span class="who">{{ 'Tutor' if m.role == 'tutor' else student }}</span>{{
+      m.content }}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="muted" style="margin: 0">No messages for this challenge.</p>
+  {% endif %}
+</div>
+{% endblock %}

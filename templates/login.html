@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block wrapclass %}narrow{% endblock %}
+{% block content %}
+<div style="text-align:center; margin:40px 0 24px;">
+  <svg viewBox="0 0 24 24" fill="none" width="40" height="40" aria-hidden="true" style="margin-bottom:12px;">
+    <path d="M6 3v18" stroke="#90a0b2" stroke-width="2" stroke-linecap="round" />
+    <path d="M6 4h11l-2.2 3.2L17 10.4H6z" fill="#e8b33d" />
+  </svg>
+  <h1>SC4012 CTF Tutor</h1>
+  <p class="lede">Practice the course challenges with an AI tutor that guides you —
+    without handing over the answer.</p>
+</div>
+
+<div class="card">
+  <h2 style="text-align:center;">Sign in to continue</h2>
+
+  {% if 'github' in providers %}
+  <a class="btn block ghost" href="{{ url_for('login_provider', provider='github') }}" style="margin-top:12px;">
+    <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <path
+        d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z" />
+    </svg>
+    Continue with GitHub
+  </a>
+  {% endif %}
+  {% if 'google' in providers %}
+  <a class="btn block ghost" href="{{ url_for('login_provider', provider='google') }}" style="margin-top:10px;">
+    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+      <path fill="#EA4335"
+        d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.9 2.4 30.4 0 24 0 14.6 0 6.4 5.4 2.6 13.2l7.9 6.1C12.3 13.2 17.7 9.5 24 9.5z" />
+      <path fill="#4285F4"
+        d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.1 5.3-4.6 7l7.1 5.5c4.2-3.9 6.6-9.6 6.6-16.5z" />
+      <path fill="#FBBC05"
+        d="M10.5 28.3c-.5-1.4-.8-2.9-.8-4.3s.3-3 .8-4.3l-7.9-6.1C1 16.8 0 20.3 0 24s1 7.2 2.6 10.4l7.9-6.1z" />
+      <path fill="#34A853"
+        d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.1-5.5c-2 1.3-4.5 2.1-8.8 2.1-6.3 0-11.7-3.7-13.5-9.1l-7.9 6.1C6.4 42.6 14.6 48 24 48z" />
+    </svg>
+    Continue with Google
+  </a>
+  {% endif %}
+  {% if 'microsoft' in providers %}
+  <a class="btn block ghost" href="{{ url_for('login_provider', provider='microsoft') }}" style="margin-top:10px;">
+    <svg width="16" height="16" viewBox="0 0 23 23" aria-hidden="true">
+      <path fill="#f25022" d="M1 1h10v10H1z" />
+      <path fill="#7fba00" d="M12 1h10v10H12z" />
+      <path fill="#00a4ef" d="M1 12h10v10H1z" />
+      <path fill="#ffb900" d="M12 12h10v10H12z" />
+    </svg>
+    Continue with Microsoft
+  </a>
+  {% endif %}
+
+  {% if not providers %}
+  <div class="notice" style="margin-top:12px;"><b>No sign-in providers configured.</b>
+    Add GitHub, Google or Microsoft keys in <span class="mono">.env</span> to enable
+    real sign-in. For now, use demo mode below.</div>
+  {% endif %}
+
+  {% if allow_demo %}
+  <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border); text-align:center;">
+    <p class="muted" style="font-size:.85rem; margin:0 0 10px;">Just exploring?</p>
+    <a class="btn" href="{{ url_for('login_demo') }}">Continue in demo mode</a>
+    <a class="btn ghost" href="{{ url_for('login_demo', role='instructor') }}" style="margin-left:6px;">Demo as
+      instructor</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

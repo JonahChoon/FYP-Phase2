@@ -1,0 +1,53 @@
+{% extends "base.html" %} {% block content %}
+<div class="page-head">
+  <h1>Instructor</h1>
+  <p class="lede">
+    See each student's progress, read their tutor conversations, and reset
+    progress when needed.
+  </p>
+</div>
+
+{% if students %}
+<div class="clist">
+  {% for s in students %}
+  <div class="crow">
+    <div class="grow">
+      <a class="nm" href="{{ url_for('instructor_user', student=s.user) }}"
+        >{{ s.user }}</a
+      >
+      <div class="ds">
+        {{ s.solved }}/{{ total }} solved · {{ s.attempted }} attempted · {{
+        s.messages }} tutor messages{% if s.last %} · last active {{ s.last }}{%
+        endif %}
+      </div>
+    </div>
+    <div class="chips">
+      <a class="open" href="{{ url_for('instructor_user', student=s.user) }}"
+        >View ›</a
+      >
+      <form
+        method="post"
+        action="{{ url_for('instructor_reset') }}"
+        style="display: inline"
+        onsubmit="return confirm('Reset ALL progress for {{ s.user }}?');"
+      >
+        <input type="hidden" name="student" value="{{ s.user }}" />
+        <button
+          class="btn ghost"
+          style="padding: 4px 10px; color: var(--muted)"
+        >
+          Reset all
+        </button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">
+  <p class="muted" style="margin: 0">
+    No student activity yet. Once someone signs in and starts a challenge,
+    they'll appear here.
+  </p>
+</div>
+{% endif %} {% endblock %}
